@@ -3,7 +3,7 @@
 package user
 
 import (
-	"github.com/stevecastle/entc-protoype/ent/schema"
+	"github.com/stevecastle/ent-prototype/ent/schema"
 )
 
 const (
@@ -18,6 +18,13 @@ const (
 
 	// Table holds the table name of the user in the database.
 	Table = "users"
+	// CarsTable is the table the holds the cars relation/edge.
+	CarsTable = "cars"
+	// CarsInverseTable is the table name for the Car entity.
+	// It exists in this package in order to avoid circular dependency with the "car" package.
+	CarsInverseTable = "cars"
+	// CarsColumn is the table column denoting the cars relation/edge.
+	CarsColumn = "owner_id"
 )
 
 // Columns holds all SQL columns are user fields.

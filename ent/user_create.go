@@ -8,7 +8,8 @@ import (
 	"fmt"
 
 	"github.com/facebookincubator/ent/dialect/sql"
-	"github.com/stevecastle/entc-protoype/ent/user"
+	"github.com/stevecastle/ent-prototype/ent/car"
+	"github.com/stevecastle/ent-prototype/ent/user"
 )
 
 // UserCreate is the builder for creating a User entity.
@@ -16,6 +17,7 @@ type UserCreate struct {
 	config
 	age  *int
 	name *string
+	cars map[int]struct{}
 }
 
 // SetAge sets the age field.
@@ -36,6 +38,26 @@ func (uc *UserCreate) SetNillableName(s *string) *UserCreate {
 		uc.SetName(*s)
 	}
 	return uc
+}
+
+// AddCarIDs adds the cars edge to Car by ids.
+func (uc *UserCreate) AddCarIDs(ids ...int) *UserCreate {
+	if uc.cars == nil {
+		uc.cars = make(map[int]struct{})
+	}
+	for i := range ids {
+		uc.cars[ids[i]] = struct{}{}
+	}
+	return uc
+}
+
+// AddCars adds the cars edges to Car.
+func (uc *UserCreate) AddCars(c ...*Car) *UserCreate {
+	ids := make([]int, len(c))
+	for i := range c {
+		ids[i] = c[i].ID
+	}
+	return uc.AddCarIDs(ids...)
 }
 
 // Save creates the User in the database.
@@ -89,6 +111,26 @@ func (uc *UserCreate) sqlSave(ctx context.Context) (*User, error) {
 		return nil, rollback(tx, err)
 	}
 	u.ID = int(id)
+	if len(uc.cars) > 0 {
+		p := sql.P()
+		for eid := range uc.cars {
+			p.Or().EQ(car.FieldID, eid)
+		}
+		query, args := sql.Update(user.CarsTable).
+			Set(user.CarsColumn, id).
+			Where(sql.And(p, sql.IsNull(user.CarsColumn))).
+			Query()
+		if err := tx.Exec(ctx, query, args, &res); err != nil {
+			return nil, rollback(tx, err)
+		}
+		affected, err := res.RowsAffected()
+		if err != nil {
+			return nil, rollback(tx, err)
+		}
+		if int(affected) < len(uc.cars) {
+			return nil, rollback(tx, &ErrConstraintFailed{msg: fmt.Sprintf("one of \"cars\" %v already connected to a different \"User\"", keys(uc.cars))})
+		}
+	}
 	if err := tx.Commit(); err != nil {
 		return nil, err
 	}

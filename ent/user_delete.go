@@ -6,8 +6,8 @@ import (
 	"context"
 
 	"github.com/facebookincubator/ent/dialect/sql"
-	"github.com/stevecastle/entc-protoype/ent/predicate"
-	"github.com/stevecastle/entc-protoype/ent/user"
+	"github.com/stevecastle/ent-prototype/ent/predicate"
+	"github.com/stevecastle/ent-prototype/ent/user"
 )
 
 // UserDelete is the builder for deleting a User entity.

@@ -4,7 +4,7 @@ package user
 
 import (
 	"github.com/facebookincubator/ent/dialect/sql"
-	"github.com/stevecastle/entc-protoype/ent/predicate"
+	"github.com/stevecastle/ent-prototype/ent/predicate"
 )
 
 // ID filters vertices based on their identifier.
@@ -351,6 +351,37 @@ func NameContainsFold(v string) predicate.User {
 	return predicate.User(
 		func(s *sql.Selector) {
 			s.Where(sql.ContainsFold(s.C(FieldName), v))
+		},
+	)
+}
+
+// HasCars applies the HasEdge predicate on the "cars" edge.
+func HasCars() predicate.User {
+	return predicate.User(
+		func(s *sql.Selector) {
+			t1 := s.Table()
+			s.Where(
+				sql.In(
+					t1.C(FieldID),
+					sql.Select(CarsColumn).
+						From(sql.Table(CarsTable)).
+						Where(sql.NotNull(CarsColumn)),
+				),
+			)
+		},
+	)
+}
+
+// HasCarsWith applies the HasEdge predicate on the "cars" edge with a given conditions (other predicates).
+func HasCarsWith(preds ...predicate.Car) predicate.User {
+	return predicate.User(
+		func(s *sql.Selector) {
+			t1 := s.Table()
+			t2 := sql.Select(CarsColumn).From(sql.Table(CarsTable))
+			for _, p := range preds {
+				p(t2)
+			}
+			s.Where(sql.In(t1.C(FieldID), t2))
 		},
 	)
 }

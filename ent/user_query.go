@@ -9,8 +9,9 @@ import (
 	"math"
 
 	"github.com/facebookincubator/ent/dialect/sql"
-	"github.com/stevecastle/entc-protoype/ent/predicate"
-	"github.com/stevecastle/entc-protoype/ent/user"
+	"github.com/stevecastle/ent-prototype/ent/car"
+	"github.com/stevecastle/ent-prototype/ent/predicate"
+	"github.com/stevecastle/ent-prototype/ent/user"
 )
 
 // UserQuery is the builder for querying User entities.
@@ -47,6 +48,19 @@ func (uq *UserQuery) Offset(offset int) *UserQuery {
 func (uq *UserQuery) Order(o ...Order) *UserQuery {
 	uq.order = append(uq.order, o...)
 	return uq
+}
+
+// QueryCars chains the current query on the cars edge.
+func (uq *UserQuery) QueryCars() *CarQuery {
+	query := &CarQuery{config: uq.config}
+	t1 := sql.Table(car.Table)
+	t2 := uq.sqlQuery()
+	t2.Select(t2.C(user.FieldID))
+	query.sql = sql.Select().
+		From(t1).
+		Join(t2).
+		On(t1.C(user.CarsColumn), t2.C(user.FieldID))
+	return query
 }
 
 // First returns the first User entity in the query. Returns *ErrNotFound when no user was found.
